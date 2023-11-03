@@ -1,0 +1,30 @@
+stages:
+  - build
+  - test
+  - docs
+
+build:
+  image: golang:latest
+  stage: build
+  script: go build
+
+test:
+  image: golang:latest
+  stage: test
+  script:
+    - TF_ACC=1 go test ./... -v
+  services:
+    - mongo:latest
+
+generate-docs:
+  image: $CI_REGISTRY/docker/terraform:1.5.5
+  stage: docs
+  before_script:
+    - apk add go
+  script:
+    - go generate ./...
+  artifacts:
+    name: "generated-docs"
+    paths:
+      - "docs/"
+  when: manual
