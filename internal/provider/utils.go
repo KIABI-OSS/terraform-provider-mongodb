@@ -1,6 +1,9 @@
 package provider
 
-import "errors"
+import (
+	"errors"
+	"strings"
+)
 
 // Convert an index type declared in terraform as string into a type and value expected by Mongo's client.
 func convertToMongoIndexType(indexType string) interface{} {
@@ -34,4 +37,19 @@ func convertToTfIndexType(indexType interface{}) (string, error) {
 	}
 
 	return "", errors.New("typeIndex MUST be int32 or string")
+}
+
+type indexId struct {
+	database   string
+	collection string
+	indexName  string
+}
+
+func parseIndexId(path string) (*indexId, error) {
+	splitPath := strings.Split(path, ".")
+	if len(splitPath) != 3 {
+		return nil, errors.New("Index id's format must be <database>.<collection>.<index_name>")
+	}
+
+	return &indexId{database: splitPath[0], collection: splitPath[1], indexName: splitPath[2]}, nil
 }

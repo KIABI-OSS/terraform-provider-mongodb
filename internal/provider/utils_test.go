@@ -56,3 +56,25 @@ func TestConvertToTfIndexTypeTypeError(t *testing.T) {
 		t.Fatalf("Expected an error, got %v, ", val)
 	}
 }
+
+func TestParseValidIndexId(t *testing.T) {
+	id, err := parseIndexId("db.collec.index_name")
+
+	want := indexId{
+		database:   "db",
+		collection: "collec",
+		indexName:  "index_name",
+	}
+
+	if want != *id {
+		t.Fatalf("Expected %v, got %v, err %v", want, id, err)
+	}
+}
+
+func TestParseInvalidIndex(t *testing.T) {
+	_, err := parseIndexId("db.collec")
+
+	if err == nil {
+		t.Fatalf("Should have failed")
+	}
+}

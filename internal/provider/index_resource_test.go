@@ -38,6 +38,13 @@ resource "mongodb_index" "acc_test" {
 					resource.TestCheckNoResourceAttr("mongodb_index.acc_test", "wildcard_projection"),
 				),
 			},
+			// ImportState testing
+			{
+				ResourceName:      "mongodb_index.acc_test",
+				ImportStateId:     "test.test.tf_acc_test",
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
 			// Replace and Read testing
 			{
 				Config: providerConfig + `
