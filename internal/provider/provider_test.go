@@ -8,7 +8,7 @@ import (
 const (
 	providerConfig = `
 provider "mongodb" {
-  url = "mongodb://mongo"
+  url = "mongodb://localhost"
 }
 `
 )
