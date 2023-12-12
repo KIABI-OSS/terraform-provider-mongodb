@@ -281,7 +281,7 @@ func (r *indexResource) Read(ctx context.Context, req resource.ReadRequest, resp
 
 	tflog.Debug(ctx, fmt.Sprintf("Found index %s.%s.%s", databaseName, collectionName, indexName))
 
-	foundKeys := make(map[string]interface{})
+	var foundKeys bson.D
 	err = bson.Unmarshal(foundIndex.KeysDocument, &foundKeys)
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -294,8 +294,8 @@ func (r *indexResource) Read(ctx context.Context, req resource.ReadRequest, resp
 	}
 
 	state.Keys = make([]indexKey, 0)
-	for k, v := range foundKeys {
-		typ, err := convertToTfIndexType(v)
+	for _, v := range foundKeys {
+		typ, err := convertToTfIndexType(v.Value)
 		if err != nil {
 			resp.Diagnostics.AddError(
 				"Unable to convert key type from fetched index",
@@ -305,7 +305,7 @@ func (r *indexResource) Read(ctx context.Context, req resource.ReadRequest, resp
 			)
 			return
 		}
-		state.Keys = append(state.Keys, indexKey{Field: k, Type: typ})
+		state.Keys = append(state.Keys, indexKey{Field: v.Key, Type: typ})
 	}
 
 	state.Sparse = foundIndex.Sparse
