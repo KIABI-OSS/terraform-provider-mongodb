@@ -14,7 +14,7 @@ This provider can be used to create MongoDB resources.
 1. Build the provider using the Go `install` command:
 
 ```shell
-go install
+go install .
 ```
 
 ## Provider configuration
@@ -47,3 +47,10 @@ The created indexes support the following properties
 - Unique
 
 You can find examples [here](examples/index/main.tf)
+
+#### Import
+
+All supported index types can now be imported using `terraform import <resource_path> <index_id>`.
+Index id must use the format `<database>.<collection>.<index_name>`.
+
+> This means that index id with database, collection or index containing `.` do NOT work.

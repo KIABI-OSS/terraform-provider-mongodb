@@ -6,6 +6,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
@@ -25,8 +26,9 @@ import (
 
 // Ensure the implementation satisfies the expected interfaces.
 var (
-	_ resource.Resource              = &indexResource{}
-	_ resource.ResourceWithConfigure = &indexResource{}
+	_ resource.Resource                = &indexResource{}
+	_ resource.ResourceWithConfigure   = &indexResource{}
+	_ resource.ResourceWithImportState = &indexResource{}
 )
 
 // indexResource is the resource implementation.
@@ -184,22 +186,22 @@ func (r *indexResource) Create(ctx context.Context, req resource.CreateRequest, 
 		return
 	}
 
-	database_name := plan.Database
-	collection_name := plan.Collection
-	index_name := plan.Name
+	databaseName := plan.Database
+	collectionName := plan.Collection
+	indexName := plan.Name
 
-	tflog.Debug(ctx, fmt.Sprintf("Creating index %s.%s.%s", database_name, collection_name, index_name))
+	tflog.Debug(ctx, fmt.Sprintf("Creating index %s.%s.%s", databaseName, collectionName, indexName))
 
 	keys := bson.D{}
 	for _, key := range plan.Keys {
 		keys = append(keys, bson.E{Key: key.Field, Value: convertToMongoIndexType(key.Type)})
 	}
 
-	db := r.client.Database(database_name)
-	collection := db.Collection(collection_name)
+	db := r.client.Database(databaseName)
+	collection := db.Collection(collectionName)
 
 	options := &options.IndexOptions{
-		Name:               &index_name,
+		Name:               &indexName,
 		Sparse:             plan.Sparse,
 		ExpireAfterSeconds: plan.ExpireAfterSeconds,
 		Unique:             plan.Unique,
@@ -229,7 +231,7 @@ func (r *indexResource) Create(ctx context.Context, req resource.CreateRequest, 
 		return
 	}
 
-	tflog.Debug(ctx, fmt.Sprintf("Index %s.%s.%s created", database_name, collection_name, index_name))
+	tflog.Debug(ctx, fmt.Sprintf("Index %s.%s.%s created", databaseName, collectionName, indexName))
 }
 
 // Read refreshes the Terraform state with the latest data.
@@ -242,14 +244,14 @@ func (r *indexResource) Read(ctx context.Context, req resource.ReadRequest, resp
 		return
 	}
 
-	database_name := state.Database
-	collection_name := state.Collection
-	index_name := state.Name
+	databaseName := state.Database
+	collectionName := state.Collection
+	indexName := state.Name
 
-	tflog.Debug(ctx, fmt.Sprintf("Getting index %s.%s.%s", database_name, collection_name, index_name))
+	tflog.Debug(ctx, fmt.Sprintf("Getting index %s.%s.%s", databaseName, collectionName, indexName))
 
-	db := r.client.Database(database_name)
-	collection := db.Collection(collection_name)
+	db := r.client.Database(databaseName)
+	collection := db.Collection(collectionName)
 	indexes, err := collection.Indexes().ListSpecifications(ctx)
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -263,7 +265,7 @@ func (r *indexResource) Read(ctx context.Context, req resource.ReadRequest, resp
 
 	var foundIndex *mongo.IndexSpecification
 	for _, index := range indexes {
-		if index.Name == index_name {
+		if index.Name == indexName {
 			foundIndex = index
 			break
 		}
@@ -271,15 +273,15 @@ func (r *indexResource) Read(ctx context.Context, req resource.ReadRequest, resp
 
 	if foundIndex == nil {
 		resp.Diagnostics.AddError(
-			"Unable to find index with name "+index_name,
+			"Unable to find index with name "+indexName,
 			"The requested index does not exist. ",
 		)
 		return
 	}
 
-	tflog.Debug(ctx, fmt.Sprintf("Found index %s.%s.%s", database_name, collection_name, index_name))
+	tflog.Debug(ctx, fmt.Sprintf("Found index %s.%s.%s", databaseName, collectionName, indexName))
 
-	foundKeys := make(map[string]interface{})
+	var foundKeys bson.D
 	err = bson.Unmarshal(foundIndex.KeysDocument, &foundKeys)
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -292,8 +294,8 @@ func (r *indexResource) Read(ctx context.Context, req resource.ReadRequest, resp
 	}
 
 	state.Keys = make([]indexKey, 0)
-	for k, v := range foundKeys {
-		typ, err := convertToTfIndexType(v)
+	for _, v := range foundKeys {
+		typ, err := convertToTfIndexType(v.Value)
 		if err != nil {
 			resp.Diagnostics.AddError(
 				"Unable to convert key type from fetched index",
@@ -303,7 +305,7 @@ func (r *indexResource) Read(ctx context.Context, req resource.ReadRequest, resp
 			)
 			return
 		}
-		state.Keys = append(state.Keys, indexKey{Field: k, Type: typ})
+		state.Keys = append(state.Keys, indexKey{Field: v.Key, Type: typ})
 	}
 
 	state.Sparse = foundIndex.Sparse
@@ -318,7 +320,7 @@ func (r *indexResource) Read(ctx context.Context, req resource.ReadRequest, resp
 		return
 	}
 
-	tflog.Debug(ctx, fmt.Sprintf("Refreshed index %s.%s.%s", database_name, collection_name, index_name))
+	tflog.Debug(ctx, fmt.Sprintf("Refreshed index %s.%s.%s", databaseName, collectionName, indexName))
 }
 
 // Update updates the resource and sets the updated Terraform state on success.
@@ -340,16 +342,16 @@ func (r *indexResource) Delete(ctx context.Context, req resource.DeleteRequest, 
 	}
 
 	// Delete index
-	database_name := state.Database
-	collection_name := state.Collection
-	index_name := state.Name
+	databaseName := state.Database
+	collectionName := state.Collection
+	indexName := state.Name
 
-	tflog.Debug(ctx, fmt.Sprintf("Dropping index %s.%s.%s", database_name, collection_name, index_name))
+	tflog.Debug(ctx, fmt.Sprintf("Dropping index %s.%s.%s", databaseName, collectionName, indexName))
 
-	db := r.client.Database(database_name)
-	collection := db.Collection(collection_name)
+	db := r.client.Database(databaseName)
+	collection := db.Collection(collectionName)
 
-	_, err := collection.Indexes().DropOne(ctx, index_name)
+	_, err := collection.Indexes().DropOne(ctx, indexName)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Unable to update (drop) index",
@@ -360,5 +362,22 @@ func (r *indexResource) Delete(ctx context.Context, req resource.DeleteRequest, 
 		return
 	}
 
-	tflog.Debug(ctx, fmt.Sprintf("Dropped index %s.%s.%s", database_name, collection_name, index_name))
+	tflog.Debug(ctx, fmt.Sprintf("Dropped index %s.%s.%s", databaseName, collectionName, indexName))
+}
+
+func (r *indexResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+	// Retrieve import ID and save to id attribute, parse it and set it has the state of the resource to import
+	id, err := parseIndexId(req.ID)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Invalid id format. Should be <database>.<collection>.<index_name>.",
+			"An unexpected error occurred when creating index. "+
+				"If the error is not clear, please contact the provider developers.\n\n"+
+				"Error: "+err.Error(),
+		)
+	}
+
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("database"), id.database)...)
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("collection"), id.collection)...)
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("name"), id.indexName)...)
 }
