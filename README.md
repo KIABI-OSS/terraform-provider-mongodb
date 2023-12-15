@@ -55,3 +55,13 @@ All supported index types can now be imported using `terraform import <resource_
 Index id must use the format `<database>.<collection>.<index_name>`.
 
 > This means that index id with database, collection or index containing `.` do NOT work.
+
+## Known issues
+
+### Index import and collation/wildcard projection
+
+Even though index collations and wildcard projections are supported when creating index
+they do NOT work with import. The `IndexSpecification` returned by the mongo driver when
+fetching index data doesn't contain those fields so they cannot be inserted into the state.
+
+Issue: https://github.com/KIABI-OSS/terraform-provider-mongodb/issues/4
