@@ -36,6 +36,7 @@ resource "mongodb_index" "acc_test" {
 					resource.TestCheckNoResourceAttr("mongodb_index.acc_test", "expire_after_seconds"),
 					resource.TestCheckNoResourceAttr("mongodb_index.acc_test", "unique"),
 					resource.TestCheckNoResourceAttr("mongodb_index.acc_test", "wildcard_projection"),
+					resource.TestCheckNoResourceAttr("mongodb_index.acc_test", "collation"),
 				),
 			},
 			// ImportState testing
@@ -76,6 +77,7 @@ resource "mongodb_index" "acc_test" {
 					resource.TestCheckNoResourceAttr("mongodb_index.acc_test", "expire_after_seconds"),
 					resource.TestCheckNoResourceAttr("mongodb_index.acc_test", "unique"),
 					resource.TestCheckNoResourceAttr("mongodb_index.acc_test", "wildcard_projection"),
+					resource.TestCheckNoResourceAttr("mongodb_index.acc_test", "collation"),
 				),
 			},
 			// Delete testing automatically occurs in TestCase

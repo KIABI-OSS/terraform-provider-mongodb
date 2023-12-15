@@ -128,3 +128,19 @@ resource "mongodb_index" "test_unique" {
   ]
   unique = true
 }
+
+resource "mongodb_index" "test_collation" {
+  database   = "test"
+  collection = "test"
+  name       = "collation"
+  keys = [
+    {
+      "field" : "f1",
+      "type" : "asc"
+    }
+  ]
+  collation = {
+    locale   = "fr"
+    strength = 2,
+  }
+}

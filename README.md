@@ -45,6 +45,7 @@ The created indexes support the following properties
 - Sparse Indexes
 - TTL Indexes
 - Unique
+- Collations
 
 You can find examples [here](examples/index/main.tf)
 
