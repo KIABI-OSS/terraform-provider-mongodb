@@ -38,6 +38,7 @@ resource "mongodb_index" "example" {
 
 ### Optional
 
+- `collation` (Attributes) Index collation. (see [below for nested schema](#nestedatt--collation))
 - `expire_after_seconds` (Number) Documents ttl in seconds for ttl indexes.
 - `sparse` (Boolean) Is it a sparse index.
 - `unique` (Boolean) Is it a unique index.
@@ -54,3 +55,22 @@ Required:
 
 - `field` (String) The name of the field to index.
 - `type` (String) The type of index for this field.
+
+
+<a id="nestedatt--collation"></a>
+### Nested Schema for `collation`
+
+Required:
+
+- `locale` (String) The locale.
+
+Optional:
+
+- `alternate` (String) Whether spaces and punctuation are considered base characters.
+- `backwards` (Boolean) Causes secondary differences to be considered in reverse order, as it is done in the French language.
+- `case_first` (String) The case ordering.
+- `case_level` (Boolean) The case level.
+- `max_variable` (String) Which characters are affected by alternate: 'shifted'.
+- `normalization` (Boolean) Causes text to be normalized into Unicode NFD.
+- `numeric_ordering` (Boolean) Whether to order numbers based on numerical order and not collation order.
+- `strength` (Number) The number of comparison levels to use.
