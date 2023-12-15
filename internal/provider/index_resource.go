@@ -13,6 +13,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/mapplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
@@ -46,6 +47,7 @@ type indexResourceModel struct {
 	ExpireAfterSeconds *int32            `tfsdk:"expire_after_seconds"`
 	Unique             *bool             `tfsdk:"unique"`
 	WildcardProjection *map[string]int32 `tfsdk:"wildcard_projection"`
+	Collation          *collation        `tfsdk:"collation"`
 
 	// see https://developer.hashicorp.com/terraform/plugin/framework/acctests#implement-id-attribute
 	Id types.String `tfsdk:"id"`
@@ -54,6 +56,18 @@ type indexResourceModel struct {
 type indexKey struct {
 	Field string `tfsdk:"field"`
 	Type  string `tfsdk:"type"`
+}
+
+type collation struct {
+	Locale          string  `tfsdk:"locale"`
+	CaseLevel       *bool   `tfsdk:"case_level"`
+	CaseFirst       *string `tfsdk:"case_first"`
+	Strength        *int    `tfsdk:"strength"`
+	NumericOrdering *bool   `tfsdk:"numeric_ordering"`
+	Alternate       *string `tfsdk:"alternate"`
+	MaxVariable     *string `tfsdk:"max_variable"`
+	Normalization   *bool   `tfsdk:"normalization"`
+	Backwards       *bool   `tfsdk:"backwards"`
 }
 
 // NewIndexResource is a helper function to simplify the provider implementation.
@@ -167,6 +181,78 @@ func (r *indexResource) Schema(_ context.Context, _ resource.SchemaRequest, resp
 					mapplanmodifier.RequiresReplace(),
 				},
 			},
+			"collation": schema.SingleNestedAttribute{
+				Description: "Index collation.",
+				Optional:    true,
+				PlanModifiers: []planmodifier.Object{
+					objectplanmodifier.RequiresReplace(),
+				},
+				Attributes: map[string]schema.Attribute{
+					"locale": schema.StringAttribute{
+						Description: "The locale.",
+						Required:    true,
+						PlanModifiers: []planmodifier.String{
+							stringplanmodifier.RequiresReplace(),
+						},
+					},
+					"case_level": schema.BoolAttribute{
+						Description: "The case level.",
+						Optional:    true,
+						PlanModifiers: []planmodifier.Bool{
+							boolplanmodifier.RequiresReplace(),
+						},
+					},
+					"case_first": schema.StringAttribute{
+						Description: "The case ordering.",
+						Optional:    true,
+						PlanModifiers: []planmodifier.String{
+							stringplanmodifier.RequiresReplace(),
+						},
+					},
+					"strength": schema.Int64Attribute{
+						Description: "The number of comparison levels to use.",
+						Optional:    true,
+						PlanModifiers: []planmodifier.Int64{
+							int64planmodifier.RequiresReplace(),
+						},
+					},
+					"numeric_ordering": schema.BoolAttribute{
+						Description: "Whether to order numbers based on numerical order and not collation order.",
+						Optional:    true,
+						PlanModifiers: []planmodifier.Bool{
+							boolplanmodifier.RequiresReplace(),
+						},
+					},
+					"alternate": schema.StringAttribute{
+						Description: "Whether spaces and punctuation are considered base characters.",
+						Optional:    true,
+						PlanModifiers: []planmodifier.String{
+							stringplanmodifier.RequiresReplace(),
+						},
+					},
+					"max_variable": schema.StringAttribute{
+						Description: "Which characters are affected by alternate: 'shifted'.",
+						Optional:    true,
+						PlanModifiers: []planmodifier.String{
+							stringplanmodifier.RequiresReplace(),
+						},
+					},
+					"normalization": schema.BoolAttribute{
+						Description: "Causes text to be normalized into Unicode NFD.",
+						Optional:    true,
+						PlanModifiers: []planmodifier.Bool{
+							boolplanmodifier.RequiresReplace(),
+						},
+					},
+					"backwards": schema.BoolAttribute{
+						Description: "Causes secondary differences to be considered in reverse order, as it is done in the French language.",
+						Optional:    true,
+						PlanModifiers: []planmodifier.Bool{
+							boolplanmodifier.RequiresReplace(),
+						},
+					},
+				},
+			},
 			// see https://developer.hashicorp.com/terraform/plugin/framework/acctests#implement-id-attribute
 			"id": schema.StringAttribute{
 				Computed:           true,
@@ -205,6 +291,7 @@ func (r *indexResource) Create(ctx context.Context, req resource.CreateRequest, 
 		Sparse:             plan.Sparse,
 		ExpireAfterSeconds: plan.ExpireAfterSeconds,
 		Unique:             plan.Unique,
+		Collation:          plan.Collation.toMongoCollation(),
 	}
 	if plan.WildcardProjection != nil {
 		options.WildcardProjection = plan.WildcardProjection
@@ -375,6 +462,7 @@ func (r *indexResource) ImportState(ctx context.Context, req resource.ImportStat
 				"If the error is not clear, please contact the provider developers.\n\n"+
 				"Error: "+err.Error(),
 		)
+		return
 	}
 
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("database"), id.database)...)
