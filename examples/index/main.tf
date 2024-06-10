@@ -144,3 +144,16 @@ resource "mongodb_index" "test_collation" {
     strength = 2,
   }
 }
+
+resource "mongodb_index" "test_background" {
+  database   = "test"
+  collection = "test"
+  name       = "background"
+  keys = [
+    {
+      "field" : "f1",
+      "type" : "asc"
+    }
+  ]
+  background = true
+}

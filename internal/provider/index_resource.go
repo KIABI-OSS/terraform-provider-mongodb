@@ -48,6 +48,7 @@ type indexResourceModel struct {
 	Unique             *bool             `tfsdk:"unique"`
 	WildcardProjection *map[string]int32 `tfsdk:"wildcard_projection"`
 	Collation          *collation        `tfsdk:"collation"`
+	background		   *bool             `tfsdk:"background"`
 
 	// see https://developer.hashicorp.com/terraform/plugin/framework/acctests#implement-id-attribute
 	Id types.String `tfsdk:"id"`
@@ -181,6 +182,12 @@ func (r *indexResource) Schema(_ context.Context, _ resource.SchemaRequest, resp
 					mapplanmodifier.RequiresReplace(),
 				},
 			},
+			"background": schema.BoolAttribute{
+				Description: "Create the index in the background.",
+				Optional:    true,
+				PlanModifiers: []planmodifier.Bool{
+					boolplanmodifier.RequiresReplace(),
+				},
 			"collation": schema.SingleNestedAttribute{
 				Description: "Index collation.",
 				Optional:    true,
@@ -292,6 +299,7 @@ func (r *indexResource) Create(ctx context.Context, req resource.CreateRequest, 
 		ExpireAfterSeconds: plan.ExpireAfterSeconds,
 		Unique:             plan.Unique,
 		Collation:          plan.Collation.toMongoCollation(),
+		Background: 	    plan.background,
 	}
 	if plan.WildcardProjection != nil {
 		options.WildcardProjection = plan.WildcardProjection
