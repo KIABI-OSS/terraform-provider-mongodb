@@ -48,7 +48,7 @@ type indexResourceModel struct {
 	Unique             *bool             `tfsdk:"unique"`
 	WildcardProjection *map[string]int32 `tfsdk:"wildcard_projection"`
 	Collation          *collation        `tfsdk:"collation"`
-	background		   *bool             `tfsdk:"background"`
+	Background		   *bool             `tfsdk:"background"`
 
 	// see https://developer.hashicorp.com/terraform/plugin/framework/acctests#implement-id-attribute
 	Id types.String `tfsdk:"id"`

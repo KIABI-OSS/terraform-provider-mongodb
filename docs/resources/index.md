@@ -43,6 +43,7 @@ resource "mongodb_index" "example" {
 - `sparse` (Boolean) Is it a sparse index.
 - `unique` (Boolean) Is it a unique index.
 - `wildcard_projection` (Map of Number) Projection for wirldcard indexes.
+- `background` (Boolean) Create the index in the background. 
 
 ### Read-Only
 

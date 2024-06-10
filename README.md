@@ -46,6 +46,7 @@ The created indexes support the following properties
 - TTL Indexes
 - Unique
 - Collations
+- Background
 
 You can find examples [here](examples/index/main.tf)
 
