@@ -188,6 +188,7 @@ func (r *indexResource) Schema(_ context.Context, _ resource.SchemaRequest, resp
 				PlanModifiers: []planmodifier.Bool{
 					boolplanmodifier.RequiresReplace(),
 				},
+			},
 			"collation": schema.SingleNestedAttribute{
 				Description: "Index collation.",
 				Optional:    true,
@@ -299,7 +300,7 @@ func (r *indexResource) Create(ctx context.Context, req resource.CreateRequest, 
 		ExpireAfterSeconds: plan.ExpireAfterSeconds,
 		Unique:             plan.Unique,
 		Collation:          plan.Collation.toMongoCollation(),
-		Background: 	    plan.background,
+		Background:         plan.Background,
 	}
 	if plan.WildcardProjection != nil {
 		options.WildcardProjection = plan.WildcardProjection
