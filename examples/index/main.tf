@@ -151,7 +151,7 @@ resource "mongodb_index" "test_background" {
   name       = "background"
   keys = [
     {
-      "field" : "f1",
+      "field" : "f1_bg",
       "type" : "asc"
     }
   ]
