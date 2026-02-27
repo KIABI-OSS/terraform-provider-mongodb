@@ -59,7 +59,7 @@ Index id must use the format `<database>.<collection>.<index_name>`.
 
 ## Known issues
 
-### Index import and collation/wildcard projection
+### Index import and collation/wildcard projection/partial_filter_expression
 
 Even though index collations and wildcard projections are supported when creating index
 they do NOT work with import. The `IndexSpecification` returned by the mongo driver when
