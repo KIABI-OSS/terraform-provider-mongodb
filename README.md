@@ -39,6 +39,7 @@ The provider can be used to create indexes in a collection. The supported types 
 - Geospatial Indexes
 - Hashed Indexes
 - Wildcard Indexes
+- Partial Filter Indexes
 
 The created indexes support the following properties
 
@@ -47,6 +48,7 @@ The created indexes support the following properties
 - Unique
 - Collations
 - Background
+- Partial Filter Expression
 
 You can find examples [here](examples/index/main.tf)
 
