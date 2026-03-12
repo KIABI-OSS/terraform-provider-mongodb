@@ -39,7 +39,6 @@ The provider can be used to create indexes in a collection. The supported types 
 - Geospatial Indexes
 - Hashed Indexes
 - Wildcard Indexes
-- Partial Filter Indexes
 
 The created indexes support the following properties
 
@@ -48,7 +47,6 @@ The created indexes support the following properties
 - Unique
 - Collations
 - Background
-- Partial Filter Expression
 
 You can find examples [here](examples/index/main.tf)
 
@@ -61,7 +59,7 @@ Index id must use the format `<database>.<collection>.<index_name>`.
 
 ## Known issues
 
-### Index import and collation/wildcard projection/partial_filter_expression
+### Index import and collation/wildcard projection
 
 Even though index collations and wildcard projections are supported when creating index
 they do NOT work with import. The `IndexSpecification` returned by the mongo driver when

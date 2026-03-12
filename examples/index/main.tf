@@ -157,18 +157,3 @@ resource "mongodb_index" "test_background" {
   ]
   background = true
 }
-
-resource "mongodb_index" "test_partial_filter" {
-  database   = "test"
-  collection = "test"
-  name       = "partial_filter"
-  keys = [
-    {
-      "field" : "user_id",
-      "type" : "asc"
-    }
-  ]
-  partial_filter_expression = jsonencode({
-    "status" : "active"
-  })
-}
