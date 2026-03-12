@@ -24,6 +24,8 @@ website/node_modules
 *.iml
 *.test
 *.iml
+tests/
+terraform-provider-mongodb
 
 website/vendor
 

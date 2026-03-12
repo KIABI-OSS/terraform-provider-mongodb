@@ -16,6 +16,8 @@ jobs:
       - uses: supercharge/mongodb-github-action@1.12.0
         with:
           mongodb-version: '7.0'
+          mongodb-username: 'test'
+          mongodb-password: 'test'
 
       - name: Run tests
         run: TF_ACC=1 go test ./... -v

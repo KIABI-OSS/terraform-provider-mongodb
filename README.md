@@ -29,6 +29,14 @@ provider "mongodb" {
 
 ## Available resources
 
+### Database
+
+The provider can be used to create database.
+
+### Collection
+
+The provider can be used to create collection in a database.
+
 ### [Indexes](https://www.mongodb.com/docs/manual/indexes/)
 
 The provider can be used to create indexes in a collection. The supported types of indexes are:
