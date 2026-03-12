@@ -2,7 +2,6 @@ package provider
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
@@ -40,17 +39,16 @@ type indexResource struct {
 
 // indexResourceModel maps the resource schema data.
 type indexResourceModel struct {
-	Database                string            `tfsdk:"database"`
-	Collection              string            `tfsdk:"collection"`
-	Name                    string            `tfsdk:"name"`
-	Keys                    []indexKey        `tfsdk:"keys"`
-	Sparse                  *bool             `tfsdk:"sparse"`
-	ExpireAfterSeconds      *int32            `tfsdk:"expire_after_seconds"`
-	Unique                  *bool             `tfsdk:"unique"`
-	WildcardProjection      *map[string]int32 `tfsdk:"wildcard_projection"`
-	PartialFilterExpression *string           `tfsdk:"partial_filter_expression"`
-	Collation               *collation        `tfsdk:"collation"`
-	Background              *bool             `tfsdk:"background"`
+	Database           string            `tfsdk:"database"`
+	Collection         string            `tfsdk:"collection"`
+	Name               string            `tfsdk:"name"`
+	Keys               []indexKey        `tfsdk:"keys"`
+	Sparse             *bool             `tfsdk:"sparse"`
+	ExpireAfterSeconds *int32            `tfsdk:"expire_after_seconds"`
+	Unique             *bool             `tfsdk:"unique"`
+	WildcardProjection *map[string]int32 `tfsdk:"wildcard_projection"`
+	Collation          *collation        `tfsdk:"collation"`
+	Background         *bool             `tfsdk:"background"`
 
 	// see https://developer.hashicorp.com/terraform/plugin/framework/acctests#implement-id-attribute
 	Id types.String `tfsdk:"id"`
@@ -184,13 +182,6 @@ func (r *indexResource) Schema(_ context.Context, _ resource.SchemaRequest, resp
 					mapplanmodifier.RequiresReplace(),
 				},
 			},
-			"partial_filter_expression": schema.StringAttribute{
-				Description: "A JSON string representing a filter expression for partial indexes.",
-				Optional:    true,
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.RequiresReplace(),
-				},
-			},
 			"background": schema.BoolAttribute{
 				Description: "Create the index in the background.",
 				Optional:    true,
@@ -314,20 +305,6 @@ func (r *indexResource) Create(ctx context.Context, req resource.CreateRequest, 
 	if plan.WildcardProjection != nil {
 		options.WildcardProjection = plan.WildcardProjection
 	}
-	if plan.PartialFilterExpression != nil {
-		var filterExpr bson.M
-		err := json.Unmarshal([]byte(*plan.PartialFilterExpression), &filterExpr)
-		if err != nil {
-			resp.Diagnostics.AddError(
-				"Unable to parse partial_filter_expression",
-				"The partial_filter_expression must be valid JSON. "+
-					"If the error is not clear, please contact the provider developers.\n\n"+
-					"Error: "+err.Error(),
-			)
-			return
-		}
-		options.PartialFilterExpression = filterExpr
-	}
 
 	name, err := collection.Indexes().CreateOne(ctx, mongo.IndexModel{Keys: keys, Options: options})
 	if err != nil {
@@ -431,9 +408,6 @@ func (r *indexResource) Read(ctx context.Context, req resource.ReadRequest, resp
 	state.ExpireAfterSeconds = foundIndex.ExpireAfterSeconds
 	state.Unique = foundIndex.Unique
 	state.Id = types.StringValue("to_be_ignored")
-
-	// Note: PartialFilterExpression is not exposed by mongo.IndexSpecification,
-	// so we cannot read it back from MongoDB. Terraform will manage this value from state.
 
 	// Set refreshed state
 	diags = resp.State.Set(ctx, &state)

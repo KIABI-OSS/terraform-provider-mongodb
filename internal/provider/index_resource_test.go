@@ -36,7 +36,6 @@ resource "mongodb_index" "acc_test" {
 					resource.TestCheckNoResourceAttr("mongodb_index.acc_test", "expire_after_seconds"),
 					resource.TestCheckNoResourceAttr("mongodb_index.acc_test", "unique"),
 					resource.TestCheckNoResourceAttr("mongodb_index.acc_test", "wildcard_projection"),
-					resource.TestCheckNoResourceAttr("mongodb_index.acc_test", "partial_filter_expression"),
 					resource.TestCheckNoResourceAttr("mongodb_index.acc_test", "collation"),
 					resource.TestCheckNoResourceAttr("mongodb_index.acc_test", "background"),
 				),
@@ -79,54 +78,11 @@ resource "mongodb_index" "acc_test" {
 					resource.TestCheckNoResourceAttr("mongodb_index.acc_test", "expire_after_seconds"),
 					resource.TestCheckNoResourceAttr("mongodb_index.acc_test", "unique"),
 					resource.TestCheckNoResourceAttr("mongodb_index.acc_test", "wildcard_projection"),
-					resource.TestCheckNoResourceAttr("mongodb_index.acc_test", "partial_filter_expression"),
 					resource.TestCheckNoResourceAttr("mongodb_index.acc_test", "collation"),
 					resource.TestCheckNoResourceAttr("mongodb_index.acc_test", "background"),
 				),
 			},
 			// Delete testing automatically occurs in TestCase
-		},
-	})
-}
-
-func TestAccIndexResourceWithPartialFilterExpression(t *testing.T) {
-	resource.Test(t, resource.TestCase{
-		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
-		Steps: []resource.TestStep{
-			// Create and Read testing with partial filter expression
-			{
-				Config: providerConfig + `
-resource "mongodb_index" "partial_filter_test" {
-  database   = "test"
-  collection = "test"
-  name       = "partial_filter_idx"
-  keys = [
-    {
-      "field" : "status"
-      "type" : "asc"
-    }
-  ]
-  partial_filter_expression = jsonencode({
-    "status" : "active"
-  })
-}
-`,
-				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("mongodb_index.partial_filter_test", "database", "test"),
-					resource.TestCheckResourceAttr("mongodb_index.partial_filter_test", "collection", "test"),
-					resource.TestCheckResourceAttr("mongodb_index.partial_filter_test", "name", "partial_filter_idx"),
-					resource.TestCheckResourceAttr("mongodb_index.partial_filter_test", "keys.0.field", "status"),
-					resource.TestCheckResourceAttr("mongodb_index.partial_filter_test", "keys.0.type", "asc"),
-					resource.TestCheckResourceAttrSet("mongodb_index.partial_filter_test", "partial_filter_expression"),
-				),
-			},
-			// ImportState testing
-			{
-				ResourceName:      "mongodb_index.partial_filter_test",
-				ImportStateId:     "test.test.partial_filter_idx",
-				ImportState:       true,
-				ImportStateVerify: true,
-			},
 		},
 	})
 }
