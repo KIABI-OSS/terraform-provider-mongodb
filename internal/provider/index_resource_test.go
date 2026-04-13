@@ -106,9 +106,7 @@ resource "mongodb_index" "partial_filter_test" {
       "type" : "asc"
     }
   ]
-  partial_filter_expression = jsonencode({
-    "status" : "active"
-  })
+  partial_filter_expression = jsonencode({"status" : "active"})
 }
 `,
 				Check: resource.ComposeAggregateTestCheckFunc(

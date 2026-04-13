@@ -432,8 +432,49 @@ func (r *indexResource) Read(ctx context.Context, req resource.ReadRequest, resp
 	state.Unique = foundIndex.Unique
 	state.Id = types.StringValue("to_be_ignored")
 
-	// Note: PartialFilterExpression is not exposed by mongo.IndexSpecification,
-	// so we cannot read it back from MongoDB. Terraform will manage this value from state.
+	indexesCursor, err := collection.Indexes().List(ctx)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Unable to list indexes",
+			"An unexpected error occurred when listing indexes. "+
+				"If the error is not clear, please contact the provider developers.\n\n"+
+				"Error: "+err.Error(),
+		)
+		return
+	}
+	defer indexesCursor.Close(ctx)
+
+	for indexesCursor.Next(ctx) {
+		rawIndex := indexesCursor.Current
+
+		nameValue := rawIndex.Lookup("name")
+		if nameValue.Type != 0 && nameValue.StringValue() == indexName {
+			partialFilterValue := rawIndex.Lookup("partialFilterExpression")
+			if partialFilterValue.Type != 0 {
+				// Normalize the JSON to avoid whitespace differences
+				var filterExpr interface{}
+				err := json.Unmarshal([]byte(partialFilterValue.String()), &filterExpr)
+				if err == nil {
+					normalizedJSON, err := json.Marshal(filterExpr)
+					if err == nil {
+						partialFilterExpression := string(normalizedJSON)
+						state.PartialFilterExpression = &partialFilterExpression
+					}
+				}
+			}
+			break
+		}
+	}
+
+	if err := indexesCursor.Err(); err != nil {
+		resp.Diagnostics.AddError(
+			"Unable to list indexes",
+			"An unexpected error occurred when listing indexes. "+
+				"If the error is not clear, please contact the provider developers.\n\n"+
+				"Error: "+err.Error(),
+		)
+		return
+	}
 
 	// Set refreshed state
 	diags = resp.State.Set(ctx, &state)
