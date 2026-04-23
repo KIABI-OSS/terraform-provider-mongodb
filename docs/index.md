@@ -14,7 +14,14 @@ Create resources in MongoDB.
 
 ```terraform
 provider "mongodb" {
-  # the env variable MONGODB_URL can be used instead
+  host = "localhost"
+  port = "27017"
+  username = "admin"
+  password = "password"
+  auth_database = "admin"
+}
+
+provider "mongodb" {
   url = "mongodb://localhost:27017"
 }
 ```
@@ -24,4 +31,16 @@ provider "mongodb" {
 
 ### Optional
 
-- `url` (String) URL of the MongoDB instance to connect to.
+- `host` (String) The MongoDB server address.
+- `port` (String) The MongoDB server port.
+- `username` (String) The MongoDB user.
+- `password` (String) The MongoDB password.
+- `auth_database` (String) The MongoDB auth database.
+- `replica_set` (String) The MongoDB replica set.
+- `insecure_skip_verify` (Boolean) Ignore hostname verification.
+- `ssl` (Boolean) SSL activation.
+- `direct` (Boolean) Enforces a direct connection instead of discovery.
+- `retrywrites` (Boolean) Retryable Writes.
+- `proxy` (String) Proxy through which to connect to MongoDB. Supported protocols are http, https, and socks5.
+- `certificate` (String) PEM-encoded content of Mongodb host CA certificate.
+- `url` (String) The url of the mongodb server.
