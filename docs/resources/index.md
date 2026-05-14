@@ -41,6 +41,7 @@ resource "mongodb_index" "example" {
 - `background` (Boolean) Create the index in the background.
 - `collation` (Attributes) Index collation. (see [below for nested schema](#nestedatt--collation))
 - `expire_after_seconds` (Number) Documents ttl in seconds for ttl indexes.
+- `partial_filter_expression` (String) A JSON string representing a filter expression for partial indexes.
 - `sparse` (Boolean) Is it a sparse index.
 - `unique` (Boolean) Is it a unique index.
 - `wildcard_projection` (Map of Number) Projection for wirldcard indexes.
