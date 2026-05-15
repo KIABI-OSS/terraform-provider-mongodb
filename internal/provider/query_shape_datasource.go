@@ -465,15 +465,15 @@ func (d *queryShapeDataSource) buildCountExplain(plan queryShapeModel, collectio
 	return bson.D{{Key: "explain", Value: args}}
 }
 
-func parseFilter(s string) bson.M {
+func parseFilter(s string) bson.D {
 	if s == "" {
-		return bson.M{}
+		return bson.D{}
 	}
-	var v bson.M
+	var v bson.D
 	if json.Unmarshal([]byte(s), &v) == nil {
 		return v
 	}
-	return bson.M{}
+	return bson.D{}
 }
 
 func parsePipeline(s string) bson.A {
@@ -487,7 +487,7 @@ func parsePipeline(s string) bson.A {
 	return bson.A{}
 }
 
-func setIf(args *bson.D, key string, v bson.M) {
+func setIf(args *bson.D, key string, v bson.D) {
 	if v != nil && len(v) > 0 {
 		*args = append(*args, bson.E{Key: key, Value: v})
 	}

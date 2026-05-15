@@ -1,6 +1,7 @@
 package provider
 
 import (
+	"fmt"
 	"regexp"
 	"testing"
 
@@ -261,7 +262,7 @@ data "mongodb_query_shape" "find_hint" {
   collection = "test"
   command    = "find"
   filter     = jsonencode({"status" : "active"})
-  hint       = jsonencode({"status" : 1, "created_at" : -1})
+  hint       = jsonencode("_id_")
 }
 `,
 				Check: resource.ComposeAggregateTestCheckFunc(
@@ -553,6 +554,92 @@ data "mongodb_query_shape" "count_sort" {
 }
 `,
 				ExpectError: regexp.MustCompile(`.*sort cannot be set when command is "count".*`),
+			},
+		},
+	})
+}
+
+func TestAccQueryShapeDatasourceHashConsistencySameConfig(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: providerConfig + `
+data "mongodb_query_shape" "a" {
+  database   = "test"
+  collection = "test"
+  command    = "find"
+  filter     = jsonencode({"status" : "active", "category" : "electronics", "nested" : {"a" : 1, "b" : 2}})
+  sort       = jsonencode({"created_at" : -1, "name" : 1})
+  projection = jsonencode({"_id" : 0, "name" : 1, "price" : 1})
+}
+
+data "mongodb_query_shape" "b" {
+  database   = "test"
+  collection = "test"
+  command    = "find"
+  filter     = jsonencode({"status" : "active", "category" : "electronics", "nested" : {"a" : 1, "b" : 2}})
+  sort       = jsonencode({"created_at" : -1, "name" : 1})
+  projection = jsonencode({"_id" : 0, "name" : 1, "price" : 1})
+}
+`,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrPair(
+						"data.mongodb_query_shape.a", "hash",
+						"data.mongodb_query_shape.b", "hash",
+					),
+				),
+			},
+		},
+	})
+}
+
+func TestAccQueryShapeDatasourceHashConsistencyCrossStep(t *testing.T) {
+	var hash string
+
+	resource.Test(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: providerConfig + `
+data "mongodb_query_shape" "consistency" {
+  database   = "test"
+  collection = "test"
+  command    = "find"
+  filter     = jsonencode({"status" : "active", "category" : "electronics", "nested" : {"a" : 1, "b" : 2}})
+  sort       = jsonencode({"created_at" : -1, "name" : 1})
+  projection = jsonencode({"_id" : 0, "name" : 1, "price" : 1})
+  hint       = jsonencode("_id_")
+}
+`,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrSet("data.mongodb_query_shape.consistency", "hash"),
+					resource.TestCheckResourceAttrWith("data.mongodb_query_shape.consistency", "hash", func(v string) error {
+						hash = v
+						return nil
+					}),
+				),
+			},
+			{
+				Config: providerConfig + `
+data "mongodb_query_shape" "consistency" {
+  database   = "test"
+  collection = "test"
+  command    = "find"
+  filter     = jsonencode({"status" : "active", "category" : "electronics", "nested" : {"a" : 1, "b" : 2}})
+  sort       = jsonencode({"created_at" : -1, "name" : 1})
+  projection = jsonencode({"_id" : 0, "name" : 1, "price" : 1})
+  hint       = jsonencode("_id_")
+}
+`,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrWith("data.mongodb_query_shape.consistency", "hash", func(v string) error {
+						if v != hash {
+							return fmt.Errorf("query hash is not deterministic across applies: first produced %q, second produced %q", hash, v)
+						}
+						return nil
+					}),
+				),
 			},
 		},
 	})
