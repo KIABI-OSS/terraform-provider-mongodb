@@ -2,7 +2,21 @@ version: '3.8'
 
 services:
   mongo:
-    image: mongo
+    image: mongo:8.0
     restart: always
     ports:
       - 27017:27017
+    command: ["mongod", "--replSet", "rs0", "--bind_ip_all"]
+    healthcheck:
+      test: |
+        mongosh --quiet --eval "
+          try {
+            rs.status().ok
+          } catch(e) {
+            rs.initiate({_id:'rs0',members:[{_id:0,host:'localhost:27017'}]})
+          }
+        " | grep -q 1
+      interval: 5s
+      timeout: 30s
+      start_period: 30s
+      retries: 10

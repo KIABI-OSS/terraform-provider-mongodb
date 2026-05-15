@@ -138,12 +138,15 @@ func (p *mongodbProvider) Configure(ctx context.Context, req provider.ConfigureR
 
 // DataSources defines the data sources implemented in the provider.
 func (p *mongodbProvider) DataSources(_ context.Context) []func() datasource.DataSource {
-	return nil
+	return []func() datasource.DataSource{
+		NewQueryShapeDataSource,
+	}
 }
 
 // Resources defines the resources implemented in the provider.
 func (p *mongodbProvider) Resources(_ context.Context) []func() resource.Resource {
 	return []func() resource.Resource{
 		NewIndexResource,
+		NewQueryPlanResource,
 	}
 }
